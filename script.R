@@ -143,3 +143,45 @@ colnames(cell_counts_df) <- c("Cell Type", "Count")
 
 # Display table in console
 print(cell_counts_df)
+
+######## Figure 1b
+
+# Load required libraries
+library(ggplot2)
+library(dplyr)
+library(Seurat)
+
+# Extract UMAP coordinates
+umap_data <- as.data.frame(seurat_obj@reductions$umap@cell.embeddings)
+colnames(umap_data) <- c("UMAP_1", "UMAP_2")  # Standardize names
+
+# Assign time point metadata
+umap_data$time_point <- seurat_obj@meta.data$time_point
+
+# Remove NA values in time point column
+umap_data <- na.omit(umap_data)
+
+# Order time points to match reference plot layout
+umap_data$time_point <- factor(umap_data$time_point, levels = c("Uninjured", "1dpi", "3dpi", "7dpi"))
+
+# Create UMAP density plot with correct colors and layout
+ggplot(umap_data, aes(x = UMAP_1, y = UMAP_2)) +
+  geom_bin2d(bins = 100) +  # Create 2D histogram bins for density
+  scale_fill_gradient(low = "yellow", high = "red", trans = "log2") +  # Match paper's density color scale
+  facet_wrap(~time_point, ncol = 2) +  # Ensure correct 2x2 layout
+  theme_minimal() +  # Clean background
+  theme(
+    panel.grid = element_blank(),  # Remove unnecessary grid lines
+    axis.text = element_text(size = 12, face = "bold"),
+    axis.title = element_text(size = 14, face = "bold"),
+    strip.text = element_text(size = 14, face = "bold"),
+    legend.title = element_text(size = 12, face = "bold"),
+    legend.text = element_text(size = 10),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+  ) +
+  labs(
+    title = "UMAP of All Cells Split by Time Point (Log2 Density)",
+    x = "UMAP 1",
+    y = "UMAP 2",
+    fill = "log2(Density)"  # Correct legend label
+  )
